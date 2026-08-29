@@ -26,7 +26,7 @@ This plan implements a full-stack e-commerce website for a family bakery using N
     - Configure database connection string in environment variables
     - _Requirements: 20.1, 20.7_
   
-  - [ ] 1.4 Define Prisma schema with all database tables
+  - [x] 1.4 Define Prisma schema with all database tables
     - Create users table with role-based access
     - Create categories, products, product_variants, custom_package_flavors tables
     - Create cart_items, addresses tables
@@ -41,33 +41,33 @@ This plan implements a full-stack e-commerce website for a family bakery using N
     - _Requirements: 20.7_
 
 - [ ] 2. Implement authentication system with NextAuth.js
-  - [ ] 2.1 Install and configure NextAuth.js v5
+  - [x] 2.1 Install and configure NextAuth.js v5
     - Install NextAuth.js and bcrypt dependencies
     - Create NextAuth configuration with credentials provider
     - Set up JWT and session callbacks with role management
     - Configure sign-in and sign-out pages
     - _Requirements: 8.4, 8.6_
   
-  - [ ] 2.2 Create password hashing utilities
+  - [x] 2.2 Create password hashing utilities
     - Implement hashPassword function with bcrypt (12 salt rounds)
     - Implement verifyPassword function for login
     - _Requirements: 8.2_
   
-  - [ ] 2.3 Build registration page and API
+  - [x] 2.3 Build registration page and API
     - Create registration form with email, password, name, phone fields
     - Implement form validation with Zod and React Hook Form
     - Create server action to register user with hashed password
     - Validate unique email constraint
     - _Requirements: 8.1, 8.2, 8.3, 8.7_
   
-  - [ ] 2.4 Build login page with NextAuth integration
+  - [x] 2.4 Build login page with NextAuth integration
     - Create login form with email and password fields
     - Integrate with NextAuth credentials provider
     - Implement password verification
     - Create secure session after successful login
     - _Requirements: 8.4, 8.5, 8.6_
   
-  - [ ] 2.5 Create route protection helpers
+  - [x] 2.5 Create route protection helpers
     - Implement requireAuth middleware for protected routes
     - Implement requireAdmin middleware for admin-only routes
     - _Requirements: 13.2_
@@ -491,7 +491,40 @@ This plan implements a full-stack e-commerce website for a family bakery using N
     - Test database query performance
     - _Requirements: 15.8_
 
-- [ ] 18. Checkpoint - Ensure all tests pass and application is ready for deployment
+- [ ] 18. Implement additional security hardening
+  - [ ] 18.1 Configure HTTP security headers in Next.js
+    - Add `Content-Security-Policy` header to restrict resource origins
+    - Add `X-Frame-Options: DENY` to prevent clickjacking
+    - Add `X-Content-Type-Options: nosniff` to prevent MIME sniffing
+    - Add `Referrer-Policy: strict-origin-when-cross-origin`
+    - Add `Permissions-Policy` to restrict browser features
+    - Add `Strict-Transport-Security` (HSTS) for production HTTPS enforcement
+    - Configure headers in `next.config.ts` using the `headers()` function
+    - _Requirements: 8.6_
+
+  - [ ] 18.2 Implement rate limiting on authentication and sensitive endpoints
+    - Add rate limiting to `/api/auth` (login) endpoint to prevent brute force attacks
+    - Add rate limiting to `/api/auth/register` to prevent account spam
+    - Add rate limiting to `/api/newsletter` to prevent subscription abuse
+    - Use an in-memory or Redis-backed store (e.g., `@upstash/ratelimit` or `lru-cache`) for tracking request counts
+    - Return HTTP 429 with `Retry-After` header when limit is exceeded
+    - _Requirements: 8.5, 8.6_
+
+  - [ ] 18.3 Add input sanitization for free-text fields
+    - Sanitize XSS vectors in free-text inputs: order notes, delivery address, product descriptions (admin)
+    - Use a library such as `DOMPurify` (client-side) or `sanitize-html` (server-side) for any field that may render HTML
+    - Strip or escape `<script>`, `<img onerror>`, and similar patterns before persisting to database
+    - Apply sanitization inside Server Actions before `db.*` calls
+    - _Requirements: 9.2, 13.4_
+
+  - [ ] 18.4 Enforce order ownership check on order detail routes
+    - On `GET /order-confirmation/[id]` and `GET /account/orders/[id]`, verify that `order.userId === session.user.id` before returning data
+    - Return HTTP 404 (not 403) for orders that do not belong to the requesting user to prevent ID enumeration
+    - Apply the same ownership check inside `getOrderAction` server action
+    - Admin routes (`/admin/orders/[id]`) are exempt — they use `requireAdmin()` instead
+    - _Requirements: 11.3, 9.5_
+
+- [ ] 19. Checkpoint - Ensure all tests pass and application is ready for deployment
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -545,7 +578,8 @@ This plan implements a full-stack e-commerce website for a family bakery using N
     { "id": 29, "tasks": ["16.1"] },
     { "id": 30, "tasks": ["16.2"] },
     { "id": 31, "tasks": ["16.3", "17.1"] },
-    { "id": 32, "tasks": ["17.2", "17.3", "17.4"] }
+    { "id": 32, "tasks": ["17.2", "17.3", "17.4"] },
+    { "id": 33, "tasks": ["18.1", "18.2", "18.3", "18.4"] }
   ]
 }
 ```

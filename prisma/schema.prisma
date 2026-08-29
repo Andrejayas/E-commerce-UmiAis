@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +8,243 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  phone        String?
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders    Order[]
+  cartItems CartItem[]
+  addresses Address[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+// ─────────────────────────────────────────────
+// CATEGORIES
+// ─────────────────────────────────────────────
+model Category {
+  id           String    @id @default(uuid())
+  name         String    @db.VarChar(100)
+  slug         String    @unique @db.VarChar(100)
+  description  String?
+  displayOrder Int       @default(0) @map("display_order")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────
+// PRODUCTS
+// ─────────────────────────────────────────────
+model Product {
+  id                     String   @id @default(uuid())
+  categoryId             String?  @map("category_id")
+  name                   String   @db.VarChar(255)
+  slug                   String   @unique @db.VarChar(255)
+  description            String?
+  imageUrl               String?  @map("image_url") @db.VarChar(500)
+  isActive               Boolean  @default(true) @map("is_active")
+  isCustomPackage        Boolean  @default(false) @map("is_custom_package")
+  customPackageBaseQty   Int?     @map("custom_package_base_quantity")
+  customPackageBasePrice Decimal? @map("custom_package_base_price") @db.Decimal(10, 2)
+  customPackageExtraPrice Decimal? @map("custom_package_extra_price") @db.Decimal(10, 2)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  category               Category?               @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  variants               ProductVariant[]
+  flavors                CustomPackageFlavor[]
+  cartItems              CartItem[]
+  orderItems             OrderItem[]
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT VARIANTS
+// ─────────────────────────────────────────────
+model ProductVariant {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  name          String   @db.VarChar(100)
+  price         Decimal  @db.Decimal(10, 2)
+  quantityLabel String?  @map("quantity_label") @db.VarChar(50)
+  stockQuantity Int      @default(0) @map("stock_quantity")
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+// ─────────────────────────────────────────────
+// CUSTOM PACKAGE FLAVORS
+// ─────────────────────────────────────────────
+model CustomPackageFlavor {
+  id           String   @id @default(uuid())
+  productId    String   @map("product_id")
+  flavorName   String   @map("flavor_name") @db.VarChar(100)
+  displayOrder Int      @default(0) @map("display_order")
+  isAvailable  Boolean  @default(true) @map("is_available")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("custom_package_flavors")
+}
+
+// ─────────────────────────────────────────────
+// CART ITEMS
+// ─────────────────────────────────────────────
+model CartItem {
+  id                      String   @id @default(uuid())
+  userId                  String   @map("user_id")
+  productId               String   @map("product_id")
+  variantId               String   @map("variant_id")
+  quantity                Int      @default(1)
+  customPackageSelections Json?    @map("custom_package_selections")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("cart_items")
+}
+
+// ─────────────────────────────────────────────
+// ADDRESSES
+// ─────────────────────────────────────────────
+model Address {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  label         String?  @db.VarChar(50)
+  streetAddress String   @map("street_address")
+  city          String   @db.VarChar(100)
+  postalCode    String?  @map("postal_code") @db.VarChar(20)
+  province      String?  @db.VarChar(100)
+  phone         String   @db.VarChar(50)
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
+model Order {
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique @map("order_number") @db.VarChar(50)
+  userId            String?       @map("user_id")
+  customerName      String        @map("customer_name") @db.VarChar(255)
+  customerEmail     String?       @map("customer_email") @db.VarChar(255)
+  customerPhone     String        @map("customer_phone") @db.VarChar(50)
+  deliveryMethod    DeliveryMethod @map("delivery_method")
+  deliveryAddress   String?       @map("delivery_address")
+  deliveryCity      String?       @map("delivery_city") @db.VarChar(100)
+  deliveryPostalCode String?      @map("delivery_postal_code") @db.VarChar(20)
+  subtotal          Decimal       @db.Decimal(10, 2)
+  tax               Decimal       @default(0) @db.Decimal(10, 2)
+  deliveryFee       Decimal       @default(0) @map("delivery_fee") @db.Decimal(10, 2)
+  total             Decimal       @db.Decimal(10, 2)
+  status            OrderStatus   @default(PENDING_CONFIRMATION)
+  notes             String?
+  whatsappSent      Boolean       @default(false) @map("whatsapp_sent")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user       User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+enum DeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum OrderStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// ORDER ITEMS
+// ─────────────────────────────────────────────
+model OrderItem {
+  id                      String   @id @default(uuid())
+  orderId                 String   @map("order_id")
+  productId               String?  @map("product_id")
+  variantId               String?  @map("variant_id")
+  productName             String   @map("product_name") @db.VarChar(255)
+  variantName             String?  @map("variant_name") @db.VarChar(100)
+  quantity                Int
+  unitPrice               Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal                Decimal  @db.Decimal(10, 2)
+  customPackageSelections Json?    @map("custom_package_selections")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?       @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// ─────────────────────────────────────────────
+// NEWSLETTER SUBSCRIPTIONS
+// ─────────────────────────────────────────────
+model NewsletterSubscription {
+  id           String   @id @default(uuid())
+  email        String   @unique @db.VarChar(255)
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  @@index([email])
+  @@map("newsletter_subscriptions")
 }

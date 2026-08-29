@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -16,7 +17,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Umi Ai's Bakery - Fresh Homemade Baked Goods",
-  description: "Family home bakery offering fresh breads, cakes, and pastries with delivery and pickup options",
+  description:
+    "Family home bakery offering fresh breads, cakes, and pastries with delivery and pickup options",
 };
 
 export default function RootLayout({
@@ -26,7 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="bg-cream font-sans antialiased">{children}</body>
+      <body className="bg-cream font-sans antialiased">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }
