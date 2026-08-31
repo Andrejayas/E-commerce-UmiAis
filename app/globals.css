@@ -180,6 +180,14 @@
 }
 
 @layer utilities {
+  /* Line clamp */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
   /* Aspect ratio utilities for product images */
   .aspect-square {
     aspect-ratio: 1 / 1;

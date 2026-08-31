@@ -37,7 +37,6 @@ export function RegisterForm() {
       return;
     }
 
-    // Registration succeeded — send to login with success notice
     router.push('/login?registered=1');
   };
 
@@ -47,7 +46,6 @@ export function RegisterForm() {
         <Input
           label="Nama Lengkap"
           type="text"
-          name="name"
           placeholder="Nama kamu"
           required
           error={errors.name?.message}
@@ -57,7 +55,6 @@ export function RegisterForm() {
         <Input
           label="Email"
           type="email"
-          name="email"
           placeholder="nama@email.com"
           required
           error={errors.email?.message}
@@ -67,7 +64,6 @@ export function RegisterForm() {
         <Input
           label="Password"
           type="password"
-          name="password"
           placeholder="Min. 8 karakter, huruf besar, dan angka"
           required
           error={errors.password?.message}
@@ -77,7 +73,6 @@ export function RegisterForm() {
         <Input
           label="Nomor Telepon"
           type="tel"
-          name="phone"
           placeholder="08xx-xxxx-xxxx (opsional)"
           error={errors.phone?.message}
           {...register('phone')}

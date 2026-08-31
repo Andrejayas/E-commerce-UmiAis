@@ -51,7 +51,6 @@ export function LoginForm() {
         <Input
           label="Email"
           type="email"
-          name="email"
           placeholder="nama@email.com"
           required
           error={errors.email?.message}
@@ -61,7 +60,6 @@ export function LoginForm() {
         <Input
           label="Password"
           type="password"
-          name="password"
           placeholder="Masukkan password"
           required
           error={errors.password?.message}
